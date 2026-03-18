@@ -2,6 +2,7 @@ import streamlit as st
 import os
 from moviepy import ImageClip, TextClip, CompositeVideoClip
 
+# Cloud sathi ImageMagick Fix
 os.environ["IMAGEMAGICK_BINARY"] = "/usr/bin/convert"
 
 st.title("🎬 Cinematic AI Video Creator")
@@ -13,16 +14,17 @@ if st.button("Generate Motion Video!"):
     if uploaded_file is not None:
         with st.spinner("Cinematic rendering suru aahe..."):
             try:
+                # 1. Image save kar
                 with open("temp_img.png", "wb") as f:
                     f.write(uploaded_file.getbuffer())
 
-                # 1. Background with SLOW ZOOM MOTION
+                # 2. Background with SLOW ZOOM
                 bg_clip = ImageClip("temp_img.png").with_duration(5)
-                # Zoom Effect (lambda t: 1 + 0.04 * t)
+                # Zoom effect: 1 second-la 4% zoom
                 bg_clip = bg_clip.resized(lambda t: 1 + 0.04 * t)
                 bg_clip = bg_clip.resized(width=720, height=1280)
 
-                # 2. Text with Fade-In (Using crossfadein for v2.0)
+                # 3. Text with MANUAL FADE-IN (v2.0 Safe)
                 txt = TextClip(
                     text=video_text, 
                     font_size=60, 
@@ -31,17 +33,22 @@ if st.button("Generate Motion Video!"):
                     method='caption'
                 )
                 txt = txt.with_duration(5).with_position(('center', 1000))
-                txt = txt.crossfadein(1.0) # <--- HA BADAL KELA AAHE
+                
+                # 'with_opacity' vapara, ha MoviePy v2.0 madhe perfect chalto
+                txt = txt.with_opacity(lambda t: min(1.0, t / 1.0)) 
 
-                # 3. Combine
+                # 4. Combine & Write
                 final_video = CompositeVideoClip([bg_clip, txt], size=(720, 1280))
                 
                 output = "motion_render.mp4"
-                # Logger None thevla mhanje server var fast kaam karel
                 final_video.write_videofile(output, fps=24, codec="libx264", logger=None)
 
+                # 5. Preview & Download
                 st.video(output)
-                st.success("🎉 Ata bgh, motion ani fade-in donhi kaam kartil!")
+                with open(output, "rb") as f:
+                    st.download_button("Gallery madhe save kar", f, file_name="my_3d_video.mp4")
+                
+                st.success("🎉 Done! Ata bgh motion ani fade-in!")
 
             except Exception as e:
                 st.error(f"Error: {e}")
