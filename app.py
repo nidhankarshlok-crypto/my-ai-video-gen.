@@ -27,7 +27,14 @@ if st.button("Video Banav!"):
             
             # Text Clip
             # Note: Cloud var fonts cha issue yeto, mhanun 'method=caption' vaprat ahot
-            txt = TextClip(video_text, fontsize=50, color='white', size=(720, 1280), method='caption')
+            # TextClip chi line ashi badal:
+txt = TextClip(
+    text=video_text, 
+    font_size=70,      # 'fontsize' aivaji 'font_size' kar
+    color='white', 
+    size=(720, 1280), 
+    method='caption'
+)
             txt = txt.set_duration(3).set_position('center')
             
             final = CompositeVideoClip([bg, txt])
