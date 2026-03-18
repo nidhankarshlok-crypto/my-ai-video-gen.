@@ -1,49 +1,59 @@
 import streamlit as st
 import os
+from moviepy import ImageClip, TextClip, CompositeVideoClip
 
-# MoviePy v2.0 sathi navin import padhat
-try:
-    from moviepy import ColorClip, TextClip, CompositeVideoClip
-except ImportError:
-    from moviepy.editor import ColorClip, TextClip, CompositeVideoClip
-
-# Cloud var ImageMagick sathi hi line garjechi aahe
+# Cloud sathi ImageMagick Fix
 os.environ["IMAGEMAGICK_BINARY"] = "/usr/bin/convert"
 
-st.title("🚀 AI Video Generator (Fixed)")
+st.title("🎬 Pro AI Video Creator")
 
-video_text = st.text_input("Video madhe kay lihayche aahe?", "Success! Mazya Starship cha Video.")
+# 1. Image Upload Option
+uploaded_file = st.file_uploader("Tujha 3D Render (Image) upload kar", type=["png", "jpg", "jpeg"])
 
-if st.button("Video Banav!"):
-    with st.spinner("Rendering suru aahe..."):
-        try:
-            # 1. Background Clip (Black, 3 Seconds)
-            bg = ColorClip(size=(720, 1280), color=(0, 0, 0), duration=3)
+# 2. Text Input
+video_text = st.text_input("Video var kay lihayche aahe?", "My Sci-Fi Starship")
 
-            # 2. Text Clip (MoviePy v2.0 parameters)
-            txt = TextClip(
-                text=video_text, 
-                font_size=70, 
-                color='white', 
-                size=(720, 1280), 
-                method='caption'
-            )
-            txt = txt.with_duration(3).with_position('center')
+if st.button("Video Generate Kar!"):
+    if uploaded_file is not None:
+        with st.spinner("Video render hotoय..."):
+            try:
+                # Image la Temporary file mhanun save kar
+                with open("temp_img.png", "wb") as f:
+                    f.write(uploaded_file.getbuffer())
 
-            # 3. Final Composite Video
-            final_video = CompositeVideoClip([bg, txt])
-            
-            output_file = "result.mp4"
-            # write_videofile madhe logger=None mule fast render hote
-            final_video.write_videofile(output_file, fps=24, codec="libx264", logger=None)
+                # --- MOVIEPY LOGIC ---
+                # 1. Image Clip (5 Seconds)
+                # Note: Navin MoviePy madhe ImageClip nantar .with_duration vaprtat
+                bg_clip = ImageClip("temp_img.png").with_duration(5)
+                
+                # Image chi size 720x1280 (Portrait) madhe adjust karne
+                bg_clip = bg_clip.with_display_size(width=720, height=1280)
 
-            # 4. Display & Download
-            st.video(output_file)
-            with open(output_file, "rb") as file:
-                st.download_button("Video Download Kar", file, file_name="ai_video.mp4")
-            
-            st.success("🎉 Bhau, video tayar jhala!")
+                # 2. Text Clip (Khali Subtitle sarkhe)
+                txt = TextClip(
+                    text=video_text, 
+                    font_size=50, 
+                    color='yellow', 
+                    size=(600, 200), 
+                    method='caption'
+                )
+                # Text la khali (bottom) set karne
+                txt = txt.with_duration(5).with_position(('center', 1000))
 
-        except Exception as e:
-            st.error(f"Render Error: {e}")
-            st.info("Jar ImageMagick error asel, tar apan method badluya.")
+                # 3. Combine karne
+                final_video = CompositeVideoClip([bg_clip, txt], size=(720, 1280))
+                
+                output = "final_render.mp4"
+                final_video.write_videofile(output, fps=24, codec="libx264", logger=None)
+
+                # 4. Result
+                st.video(output)
+                with open(output, "rb") as f:
+                    st.download_button("Gallery madhe save kar", f, file_name="my_3d_video.mp4")
+                
+                st.success("🎉 Done! VN madhe edit karayla tayar aahe.")
+
+            except Exception as e:
+                st.error(f"Error: {e}")
+    else:
+        st.warning("Pahile ek image upload kar bhau!")
