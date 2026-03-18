@@ -27,7 +27,7 @@ if st.button("Video Generate Kar!"):
                 bg_clip = ImageClip("temp_img.png").with_duration(5)
                 
                 # Image chi size 720x1280 (Portrait) madhe adjust karne
-                bg_clip = bg_clip.with_display_size(width=720, height=1280)
+               bg_clip = bg_clip.resized(width=720, height=1280)
 
                 # 2. Text Clip (Khali Subtitle sarkhe)
                 txt = TextClip(
